@@ -385,14 +385,23 @@
           <span>Telegram Proxy Collector</span>
         </div>
         <nav class="nav" aria-label="Навигация">
-          <a href="index.html">Свежие MTProto</a>
-          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">◐</button>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            type="button"
+            aria-label="Переключить тему"
+          >
+            ◐
+          </button>
         </nav>
       </header>
 
       <section class="hero">
         <h1>Рабочие Telegram-прокси</h1>
-        <p>Публичный список показывает только прокси, которые прошли проверку последним запуском сборщика.</p>
+        <p>
+          Публичный список показывает только прокси, которые прошли проверку
+          последним запуском сборщика.
+        </p>
         <div class="summary" aria-live="polite">
           <div class="summary-item">
             <span>Обновлено</span>
@@ -410,7 +419,8 @@
       </section>
 
       <div class="notice">
-        Доступность прокси меняется со временем. Если подключение не сработало, выберите следующий вариант с меньшей задержкой.
+        Доступность прокси меняется со временем. Если подключение не сработало,
+        выберите следующий вариант с меньшей задержкой.
       </div>
 
       <section class="section" id="ruSection">
@@ -431,7 +441,10 @@
 
       <div class="empty hidden" id="emptyState">
         <strong>Пока нет проверенных прокси</strong>
-        <span>JSON создан корректно, но последний запуск не нашёл рабочие серверы.</span>
+        <span
+          >JSON создан корректно, но последний запуск не нашёл рабочие
+          серверы.</span
+        >
       </div>
     </main>
 
@@ -441,7 +454,10 @@
       const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 
       function preferredTheme() {
-        return localStorage.getItem("theme") || (systemDark.matches ? "dark" : "light");
+        return (
+          localStorage.getItem("theme") ||
+          (systemDark.matches ? "dark" : "light")
+        );
       }
 
       function setTheme(theme) {
@@ -451,7 +467,9 @@
       }
 
       themeToggle.addEventListener("click", () => {
-        setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+        setTheme(
+          document.documentElement.dataset.theme === "dark" ? "light" : "dark",
+        );
       });
       setTheme(preferredTheme());
 
@@ -478,7 +496,10 @@
 
       function buildConnectUrl(proxy) {
         if (proxy.connect_url) return proxy.connect_url;
-        const params = new URLSearchParams({ server: proxy.host, port: String(proxy.port) });
+        const params = new URLSearchParams({
+          server: proxy.host,
+          port: String(proxy.port),
+        });
         if (proxy.type === "socks5") {
           if (proxy.username) params.set("user", proxy.username);
           if (proxy.password) params.set("pass", proxy.password);
@@ -489,7 +510,9 @@
       }
 
       function text(value) {
-        return value === undefined || value === null || value === "" ? "-" : String(value);
+        return value === undefined || value === null || value === ""
+          ? "-"
+          : String(value);
       }
 
       function createDetail(term, value, className) {
@@ -549,13 +572,18 @@
         const details = document.createElement("dl");
         details.className = "details";
         [
-          createDetail("Регион", proxy.region ? proxy.region.toUpperCase() : proxy.country),
+          createDetail(
+            "Регион",
+            proxy.region ? proxy.region.toUpperCase() : proxy.country,
+          ),
           createDetail("Тип", text(proxy.type).toUpperCase()),
           createDetail("Хост", proxy.host, "mono"),
           createDetail("Порт", proxy.port),
           createDetail("Статус", proxyStatus(proxy)),
           createDetail("Пинг", pingLabel(proxy)),
-        ].flat().forEach((node) => details.appendChild(node));
+        ]
+          .flat()
+          .forEach((node) => details.appendChild(node));
 
         const actions = document.createElement("div");
         actions.className = "actions";
@@ -594,7 +622,9 @@
 
         count.textContent = `${sorted.length} прокси`;
         section.classList.toggle("hidden", sorted.length === 0);
-        sorted.forEach((proxy, index) => list.appendChild(createProxyCard(proxy, index)));
+        sorted.forEach((proxy, index) =>
+          list.appendChild(createProxyCard(proxy, index)),
+        );
         return sorted.length;
       }
 
@@ -607,17 +637,27 @@
           const ruCount = renderSegment("ru", segments.ru || []);
           const euCount = renderSegment("eu", segments.eu || []);
 
-          document.getElementById("updatedAt").textContent = formatDate(data.updated_at);
+          document.getElementById("updatedAt").textContent = formatDate(
+            data.updated_at,
+          );
           document.getElementById("ruTotal").textContent = ruCount;
           document.getElementById("euTotal").textContent = euCount;
-          document.getElementById("emptyState").classList.toggle("hidden", ruCount + euCount > 0);
+          document
+            .getElementById("emptyState")
+            .classList.toggle("hidden", ruCount + euCount > 0);
         } catch (error) {
           console.error(error);
           document.getElementById("ruSection").classList.add("hidden");
           document.getElementById("euSection").classList.add("hidden");
           document.getElementById("emptyState").classList.remove("hidden");
-          document.getElementById("emptyState").querySelector("strong").textContent = "Не удалось загрузить список";
-          document.getElementById("emptyState").querySelector("span").textContent = "Проверьте файл verified/proxies.json.";
+          document
+            .getElementById("emptyState")
+            .querySelector("strong").textContent =
+            "Не удалось загрузить список";
+          document
+            .getElementById("emptyState")
+            .querySelector("span").textContent =
+            "Проверьте файл verified/proxies.json.";
         }
       }
 
