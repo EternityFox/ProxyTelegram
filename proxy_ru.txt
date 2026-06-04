@@ -1,9 +1,8 @@
-# Verified RU Proxies (4)
-# Updated: 2026-06-04 00:11:18 UTC
+# Verified RU Proxies (3)
+# Updated: 2026-06-04 01:10:26 UTC
 # Method: TCP_OK
-# Best ping: 0.175s
+# Best ping: 0.12s
 
-tg://proxy?server=neww1727.mtproxygram.lol&port=853&secret=eea773d496c7fcdc05bd24c91a30e3090d62726f777365722e79616e6465782e636f6d
 tg://proxy?server=cloud.mtproxy.pw&port=443&secret=ee3f8a91c2d7e04b6a9f12c5e8370bd4aa786170692e6f7a6f6e2e7275
-tg://proxy?server=ytrw134-4.mtproxygram.lol&port=853&secret=ee3b5bcab52337c98260146659a677d48862726f777365722e79616e6465782e636f6d
 tg://proxy?server=He.jlpoKcu.cloud&port=443&secret=ee3f8a91c2d7e04b6a9f12c5e8370bd4aa786170692e6f7a6f6e2e7275
+tg://proxy?server=80.96.112.222&port=443&secret=ee2e7fcf4666472ebd58e4fea75357105f7777772e79616e6465782e7275
