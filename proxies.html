@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Рабочие Telegram-прокси</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: light;
+        --bg: #eef3f8;
+        --surface: #ffffff;
+        --surface-2: #f6f8fb;
+        --text: #15202b;
+        --muted: #667085;
+        --line: #d9e2ec;
+        --accent: #2481cc;
+        --accent-strong: #1b6fac;
+        --ok: #168a4a;
+        --warn: #b7791f;
+        --shadow: 0 8px 28px rgba(21, 32, 43, 0.08);
+      }
+
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f141a;
+        --surface: #171d24;
+        --surface-2: #202832;
+        --text: #edf2f7;
+        --muted: #a5b0bd;
+        --line: #2f3946;
+        --accent: #4aa3df;
+        --accent-strong: #6bb8ef;
+        --ok: #48bb78;
+        --warn: #ecc94b;
+        --shadow: 0 10px 34px rgba(0, 0, 0, 0.28);
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+          sans-serif;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 48px;
+      }
+
+      .topbar,
+      .hero,
+      .section,
+      .empty,
+      .notice {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        border-radius: 8px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 14px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 750;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 8px;
+        color: #fff;
+        background: var(--accent);
+        font-weight: 800;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .nav a,
+      .theme-toggle,
+      .button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .nav a,
+      .theme-toggle {
+        min-height: 38px;
+        padding: 8px 11px;
+      }
+
+      .theme-toggle {
+        width: 42px;
+      }
+
+      .hero {
+        padding: 28px;
+        margin-bottom: 18px;
+      }
+
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: clamp(30px, 5vw, 52px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .hero p {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .summary-item {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+      }
+
+      .summary-item span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary-item strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 22px;
+      }
+
+      .notice {
+        margin-bottom: 18px;
+        padding: 13px 15px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .section {
+        margin-top: 18px;
+        overflow: hidden;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .section-count {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .proxy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .proxy-card {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-2);
+        padding: 14px;
+      }
+
+      .proxy-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 13px;
+      }
+
+      .proxy-title {
+        min-width: 0;
+      }
+
+      .proxy-title strong,
+      .mono {
+        overflow-wrap: anywhere;
+      }
+
+      .proxy-title span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        padding: 5px 9px;
+        color: var(--ok);
+        background: color-mix(in srgb, var(--ok) 14%, transparent);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .details {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 8px 10px;
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .details dt {
+        color: var(--muted);
+      }
+
+      .details dd {
+        min-width: 0;
+        margin: 0;
+      }
+
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+          monospace;
+        font-size: 13px;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 9px 12px;
+      }
+
+      .button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .button.primary:hover {
+        background: var(--accent-strong);
+      }
+
+      .button.secondary:hover,
+      .nav a:hover,
+      .theme-toggle:hover {
+        border-color: var(--accent);
+      }
+
+      .button.web {
+        grid-column: 1 / -1;
+      }
+
+      .empty {
+        margin-top: 18px;
+        padding: 34px 20px;
+        text-align: center;
+      }
+
+      .empty strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      .empty span {
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100% - 22px, 1120px);
+          padding-top: 12px;
+        }
+
+        .topbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .nav {
+          display: grid;
+          grid-template-columns: 1fr 42px;
+        }
+
+        .nav a {
+          text-align: center;
+        }
+
+        .hero {
+          padding: 22px 18px;
+        }
+
+        .summary {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .proxy-grid {
+          grid-template-columns: 1fr;
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">TG</span>
+          <span>Telegram Proxy Collector</span>
+        </div>
+        <nav class="nav" aria-label="Навигация">
+          <a href="index.html">Свежие MTProto</a>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Переключить тему">◐</button>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <h1>Рабочие Telegram-прокси</h1>
+        <p>Публичный список показывает только прокси, которые прошли проверку последним запуском сборщика.</p>
+        <div class="summary" aria-live="polite">
+          <div class="summary-item">
+            <span>Обновлено</span>
+            <strong id="updatedAt">-</strong>
+          </div>
+          <div class="summary-item">
+            <span>RU-сегмент</span>
+            <strong id="ruTotal">0</strong>
+          </div>
+          <div class="summary-item">
+            <span>EU-сегмент</span>
+            <strong id="euTotal">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <div class="notice">
+        Доступность прокси меняется со временем. Если подключение не сработало, выберите следующий вариант с меньшей задержкой.
+      </div>
+
+      <section class="section" id="ruSection">
+        <div class="section-head">
+          <h2>RU-сегмент</h2>
+          <span class="section-count" id="ruCount">0 прокси</span>
+        </div>
+        <div class="proxy-grid" id="ruList"></div>
+      </section>
+
+      <section class="section" id="euSection">
+        <div class="section-head">
+          <h2>EU / Global</h2>
+          <span class="section-count" id="euCount">0 прокси</span>
+        </div>
+        <div class="proxy-grid" id="euList"></div>
+      </section>
+
+      <div class="empty hidden" id="emptyState">
+        <strong>Пока нет проверенных прокси</strong>
+        <span>JSON создан корректно, но последний запуск не нашёл рабочие серверы.</span>
+      </div>
+    </main>
+
+    <script>
+      const DATA_URL = "verified/proxies.json";
+      const themeToggle = document.getElementById("themeToggle");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function preferredTheme() {
+        return localStorage.getItem("theme") || (systemDark.matches ? "dark" : "light");
+      }
+
+      function setTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem("theme", theme);
+        themeToggle.textContent = theme === "dark" ? "☾" : "☼";
+      }
+
+      themeToggle.addEventListener("click", () => {
+        setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+      });
+      setTheme(preferredTheme());
+
+      function formatDate(value) {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "-";
+        return new Intl.DateTimeFormat("ru-RU", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(date);
+      }
+
+      function proxyStatus(proxy) {
+        return proxy.status === "working" ? "Рабочий" : "Не проверен";
+      }
+
+      function pingLabel(proxy) {
+        return typeof proxy.ping_ms === "number" ? `${proxy.ping_ms} ms` : "-";
+      }
+
+      function buildConnectUrl(proxy) {
+        if (proxy.connect_url) return proxy.connect_url;
+        const params = new URLSearchParams({ server: proxy.host, port: String(proxy.port) });
+        if (proxy.type === "socks5") {
+          if (proxy.username) params.set("user", proxy.username);
+          if (proxy.password) params.set("pass", proxy.password);
+          return `tg://socks?${params.toString()}`;
+        }
+        params.set("secret", proxy.secret || "");
+        return `tg://proxy?${params.toString()}`;
+      }
+
+      function text(value) {
+        return value === undefined || value === null || value === "" ? "-" : String(value);
+      }
+
+      function createDetail(term, value, className) {
+        const dt = document.createElement("dt");
+        dt.textContent = term;
+        const dd = document.createElement("dd");
+        dd.textContent = text(value);
+        if (className) dd.className = className;
+        return [dt, dd];
+      }
+
+      async function copyToClipboard(value, button) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+          } else {
+            const area = document.createElement("textarea");
+            area.value = value;
+            area.style.position = "fixed";
+            area.style.left = "-9999px";
+            document.body.appendChild(area);
+            area.focus();
+            area.select();
+            document.execCommand("copy");
+            area.remove();
+          }
+          const original = button.textContent;
+          button.textContent = "Скопировано";
+          window.setTimeout(() => {
+            button.textContent = original;
+          }, 1400);
+        } catch (error) {
+          console.error(error);
+          button.textContent = "Ошибка";
+        }
+      }
+
+      function createProxyCard(proxy, index) {
+        const connectUrl = buildConnectUrl(proxy);
+        const card = document.createElement("article");
+        card.className = "proxy-card";
+
+        const top = document.createElement("div");
+        top.className = "proxy-card-top";
+        const title = document.createElement("div");
+        title.className = "proxy-title";
+        const titleStrong = document.createElement("strong");
+        titleStrong.textContent = `${proxy.country || proxy.region.toUpperCase()} #${index + 1}`;
+        const titleMeta = document.createElement("span");
+        titleMeta.textContent = `${text(proxy.type).toUpperCase()} · ${pingLabel(proxy)}`;
+        title.append(titleStrong, titleMeta);
+        const status = document.createElement("span");
+        status.className = "status";
+        status.textContent = proxyStatus(proxy);
+        top.append(title, status);
+
+        const details = document.createElement("dl");
+        details.className = "details";
+        [
+          createDetail("Регион", proxy.region ? proxy.region.toUpperCase() : proxy.country),
+          createDetail("Тип", text(proxy.type).toUpperCase()),
+          createDetail("Хост", proxy.host, "mono"),
+          createDetail("Порт", proxy.port),
+          createDetail("Статус", proxyStatus(proxy)),
+          createDetail("Пинг", pingLabel(proxy)),
+        ].flat().forEach((node) => details.appendChild(node));
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const connect = document.createElement("a");
+        connect.className = "button primary";
+        connect.href = connectUrl;
+        connect.textContent = "Подключить";
+        const copy = document.createElement("button");
+        copy.className = "button secondary";
+        copy.type = "button";
+        copy.textContent = "Скопировать";
+        copy.addEventListener("click", () => copyToClipboard(connectUrl, copy));
+        actions.append(connect, copy);
+
+        if (proxy.web_url) {
+          const web = document.createElement("a");
+          web.className = "button secondary web";
+          web.href = proxy.web_url;
+          web.textContent = "Открыть t.me";
+          actions.appendChild(web);
+        }
+
+        card.append(top, details, actions);
+        return card;
+      }
+
+      function renderSegment(name, proxies) {
+        const list = document.getElementById(`${name}List`);
+        const count = document.getElementById(`${name}Count`);
+        const section = document.getElementById(`${name}Section`);
+        list.replaceChildren();
+
+        const sorted = [...proxies]
+          .filter((proxy) => proxy && proxy.status === "working")
+          .sort((a, b) => (a.ping_ms ?? 1000000) - (b.ping_ms ?? 1000000));
+
+        count.textContent = `${sorted.length} прокси`;
+        section.classList.toggle("hidden", sorted.length === 0);
+        sorted.forEach((proxy, index) => list.appendChild(createProxyCard(proxy, index)));
+        return sorted.length;
+      }
+
+      async function loadProxies() {
+        try {
+          const response = await fetch(DATA_URL, { cache: "no-store" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          const segments = data.segments || {};
+          const ruCount = renderSegment("ru", segments.ru || []);
+          const euCount = renderSegment("eu", segments.eu || []);
+
+          document.getElementById("updatedAt").textContent = formatDate(data.updated_at);
+          document.getElementById("ruTotal").textContent = ruCount;
+          document.getElementById("euTotal").textContent = euCount;
+          document.getElementById("emptyState").classList.toggle("hidden", ruCount + euCount > 0);
+        } catch (error) {
+          console.error(error);
+          document.getElementById("ruSection").classList.add("hidden");
+          document.getElementById("euSection").classList.add("hidden");
+          document.getElementById("emptyState").classList.remove("hidden");
+          document.getElementById("emptyState").querySelector("strong").textContent = "Не удалось загрузить список";
+          document.getElementById("emptyState").querySelector("span").textContent = "Проверьте файл verified/proxies.json.";
+        }
+      }
+
+      loadProxies();
+    </script>
+  </body>
+</html>

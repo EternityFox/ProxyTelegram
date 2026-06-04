@@ -12,8 +12,15 @@ import os
 import argparse
 import asyncio
 import base64
+import sys
 from pathlib import Path
+from urllib.parse import urlencode
 from telethon.network import ConnectionTcpMTProxyRandomizedIntermediate
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 # Telethon
 try:
@@ -250,7 +257,7 @@ async def check_proxy_telethon(p: tuple, timeout_sec: float = 10.0) -> dict | No
         ping = round(time.time() - start, 3)
         return {
             'host': host, 'port': port, 'secret': secret,
-            'link': f'tg://proxy?server={host}&port={port}&secret={secret}',
+            'link': make_mtproto_link(host, port, secret),
             'ping': ping, 'region': _detect_region(domain),
             'domain': domain or '', 'method': 'Telethon_OK',
         }
@@ -281,7 +288,7 @@ def check_proxy_tcp(p: tuple) -> dict | None:
 
     return {
         'host': host, 'port': port, 'secret': secret,
-        'link': f'tg://proxy?server={host}&port={port}&secret={secret}',
+        'link': make_mtproto_link(host, port, secret),
         'ping': ping, 'region': _detect_region(domain),
         'domain': domain or '', 'method': 'TCP_OK',
     }
@@ -313,8 +320,150 @@ def deduplicate_by_host_port(proxies: list[dict]) -> list[dict]:
             best[key] = p
     return list(best.values())
 
+def make_mtproto_link(host: str, port: int, secret: str, web: bool = False) -> str:
+    query = urlencode({'server': host, 'port': int(port), 'secret': secret})
+    prefix = 'https://t.me/proxy' if web else 'tg://proxy'
+    return f'{prefix}?{query}'
+
 def make_tme_link(host: str, port: int, secret: str) -> str:
-    return f'https://t.me/proxy?server={host}&port={port}&secret={secret}'
+    return make_mtproto_link(host, port, secret, web=True)
+
+def make_socks_link(host: str, port: int, username: str = '', password: str = '') -> str:
+    params = {'server': host, 'port': int(port)}
+    if username:
+        params['user'] = username
+    if password:
+        params['pass'] = password
+    return f'tg://socks?{urlencode(params)}'
+
+def _ping_ms(proxy: dict) -> int | None:
+    value = proxy.get('ping_ms')
+    if value is None:
+        value = proxy.get('ping')
+        if value is not None:
+            value = float(value) * 1000
+    try:
+        return int(round(float(value)))
+    except (TypeError, ValueError):
+        return None
+
+def normalize_public_proxy(proxy: dict) -> dict | None:
+    """Converts a verified internal record to the stable JSON used by Pages."""
+    host = str(proxy.get('host') or '').strip()
+    port = proxy.get('port')
+    proxy_type = str(proxy.get('type') or 'mtproto').lower()
+    if not host or not _valid_port(str(port)):
+        return None
+
+    region = str(proxy.get('region') or 'eu').lower()
+    region = 'ru' if region == 'ru' else 'eu'
+    ping_ms = _ping_ms(proxy)
+    base = {
+        'type': proxy_type,
+        'country': str(proxy.get('country') or region.upper()).upper(),
+        'region': region,
+        'host': host,
+        'port': int(port),
+        'status': 'working',
+        'ping_ms': ping_ms,
+        'domain': proxy.get('domain') or '',
+        'method': proxy.get('method') or '',
+    }
+
+    if proxy_type == 'socks5':
+        username = str(proxy.get('username') or '')
+        password = str(proxy.get('password') or '')
+        base.update({
+            'username': username,
+            'password': password,
+            'connect_url': make_socks_link(host, int(port), username, password),
+            'web_url': '',
+        })
+        return base
+
+    secret = str(proxy.get('secret') or '').strip()
+    if not secret:
+        return None
+    base.update({
+        'type': 'mtproto',
+        'secret': secret,
+        'connect_url': make_mtproto_link(host, int(port), secret),
+        'web_url': make_mtproto_link(host, int(port), secret, web=True),
+    })
+    return base
+
+def build_public_payload(proxies: list[dict], updated_at: datetime) -> dict:
+    deduped: dict[tuple, dict] = {}
+    for proxy in proxies:
+        item = normalize_public_proxy(proxy)
+        if not item:
+            continue
+        key = (
+            item['type'], item['host'], item['port'],
+            item.get('secret', ''), item.get('username', ''), item.get('password', ''),
+        )
+        current = deduped.get(key)
+        if current is None or (item.get('ping_ms') or 10**9) < (current.get('ping_ms') or 10**9):
+            deduped[key] = item
+
+    segments = {'ru': [], 'eu': []}
+    for item in deduped.values():
+        segments[item['region']].append(item)
+
+    for name in segments:
+        segments[name].sort(key=lambda x: (x.get('ping_ms') is None, x.get('ping_ms') or 10**9, x['host']))
+
+    return {
+        'updated_at': updated_at.isoformat().replace('+00:00', 'Z'),
+        'segments': segments,
+        'counts': {
+            'ru': len(segments['ru']),
+            'eu': len(segments['eu']),
+            'total': len(segments['ru']) + len(segments['eu']),
+        },
+    }
+
+def write_empty_outputs(output_dir: str, start_time: float, total_raw: int, args: argparse.Namespace, use_telethon: bool) -> None:
+    utc_now = datetime.now(timezone.utc)
+    os.makedirs(output_dir, exist_ok=True)
+    headers = {
+        f'{output_dir}/proxy_ru_verified.txt': 'RU',
+        f'{output_dir}/proxy_eu_verified.txt': 'EU',
+        f'{output_dir}/proxy_all_verified.txt': 'All',
+    }
+    for filename, label in headers.items():
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(f'# Verified {label} Proxies (0)\n')
+            f.write(f'# Updated: {utc_now.strftime("%Y-%m-%d %H:%M:%S UTC")}\n')
+
+    for filename in ('proxy_all_tme_verified.txt', 'proxy_links_clean.txt', 'proxy_links_tme_clean.txt'):
+        with open(f'{output_dir}/{filename}', 'w', encoding='utf-8') as f:
+            if filename == 'proxy_all_tme_verified.txt':
+                f.write('# Verified Proxies t.me format (0)\n')
+                f.write(f'# Updated: {utc_now.strftime("%Y-%m-%d %H:%M:%S UTC")}\n')
+
+    with open(f'{output_dir}/proxy_all_verified.json', 'w', encoding='utf-8') as f:
+        json.dump([], f, indent=2, ensure_ascii=False)
+    with open(f'{output_dir}/proxies.json', 'w', encoding='utf-8') as f:
+        json.dump(build_public_payload([], utc_now), f, indent=2, ensure_ascii=False)
+
+    _write_verification_log(output_dir, start_time, total_raw, [])
+    stats = {
+        'timestamp_utc': utc_now.isoformat(),
+        'total_raw': total_raw,
+        'total_verified': 0,
+        'ru_count': 0,
+        'eu_count': 0,
+        'sources_count': len(SOURCES),
+        'telethon_used': use_telethon,
+        'best_ru_ping': None,
+        'best_eu_ping': None,
+        'execution_time': round(time.time() - start_time, 1),
+        'workers': args.workers,
+        'channel_used': args.channel,
+    }
+    with open(f'{output_dir}/proxy_stats_verified.json', 'w', encoding='utf-8') as f:
+        json.dump(stats, f, indent=2, ensure_ascii=False)
 
 # ─────────────────────────── local file ─────────────────────────
 
@@ -376,8 +525,11 @@ async def main_async(args: argparse.Namespace) -> None:
 
     print(f'\n🧩 Уникальных прокси всего: {len(all_raw)}')
 
+    use_telethon = TELETHON_AVAILABLE and API_ID and API_HASH
+
     if not all_raw:
         print('\n⚠️ Нет прокси для проверки. Завершение.')
+        write_empty_outputs(output_dir, start_time, 0, args, bool(use_telethon))
         return
 
     print(f'\n⚡ Проверка {len(all_raw)} прокси...\n')
@@ -386,38 +538,39 @@ async def main_async(args: argparse.Namespace) -> None:
     checked: int        = 0
     total:   int        = len(all_raw)
 
-    use_telethon = TELETHON_AVAILABLE and API_ID and API_HASH
     if use_telethon:
         print('🔥 Режим: Telethon MTProto (полная проверка)\n')
         semaphore = asyncio.Semaphore(args.workers)
 
-        async def check_with_semaphore(p: tuple) -> dict | None:
+        async def check_with_semaphore(p: tuple) -> tuple[tuple, dict | None]:
             async with semaphore:
                 try:
-                    return await check_proxy_telethon(p, timeout_sec=args.timeout)
+                    return p, await check_proxy_telethon(p, timeout_sec=args.timeout)
                 except Exception:
-                    return None
+                    return p, None
 
         tasks = [asyncio.create_task(check_with_semaphore(p)) for p in all_raw]
         for task in asyncio.as_completed(tasks):
             try:
-                result = await task
+                p, result = await task
                 checked += 1
-                host, port, secret = task.get_name()  # не сохраняем – используем p из tasks?
-                # Упростим: прокси хранятся в tasks, нам нужен кортеж для лога.
-                # Обойдёмся словарём из самого таска: можно перебрать tasks и получить соответствие,
-                # но проще хранить в asyncio.Queue или использовать сопоставление. Быстрое решение:
             except Exception:
                 checked += 1
+                p = ('unknown', 0, '')
                 result = None
-            # Логирование
             if result:
                 valid.append(result)
                 add_verification_entry(result, 'OK')
             else:
-                # Для неизвестного провала – попытаемся получить хост/порт/секрет из таска
-                # (нужна связь таск -> прокси). Исправим.
-                pass
+                host, port, secret = p
+                domain = decode_domain(secret)
+                proxy_info = {
+                    'host': host, 'port': port, 'secret': secret,
+                    'domain': domain or '', 'region': _detect_region(domain)
+                }
+                add_verification_entry(proxy_info, 'FAIL')
+            if checked % 100 == 0 or checked == total:
+                print(f'  [{checked}/{total}] {checked / total * 100:.0f}% | найдено: {len(valid)}')
     else:
         if not TELETHON_AVAILABLE:
             print('📡 Режим: TCP ping (Telethon не установлен) – проверяется только соединение\n')
@@ -447,21 +600,15 @@ async def main_async(args: argparse.Namespace) -> None:
                 if checked % 100 == 0 or checked == total:
                     print(f'  [{checked}/{total}] {checked / total * 100:.0f}% | найдено: {len(valid)}')
 
-    # Если Telethon – нужно доработать логирование, т.к. выше пропущено
-    # Исправляю код для Telethon-режима
-    if use_telethon:
-        # Временная заглушка для демонстрации идеи (в реальном коде нужно связать task и proxy)
-        pass
-
     if not valid:
         print('\n⚠️ Рабочих прокси не найдено.')
-        # Сохраняем лог даже если нет успешных
-        _write_verification_log(output_dir, start_time, total, valid)
+        write_empty_outputs(output_dir, start_time, total, args, bool(use_telethon))
         return
 
     valid = deduplicate_by_host_port(valid)
     ru    = sorted([x for x in valid if x['region'] == 'ru'], key=lambda x: x['ping'])
     eu    = sorted([x for x in valid if x['region'] == 'eu'], key=lambda x: x['ping'])
+    ordered_valid = ru + eu
 
     top_n = args.top if args.top > 0 else None
     utc_now = datetime.now(timezone.utc)
@@ -471,7 +618,7 @@ async def main_async(args: argparse.Namespace) -> None:
     region_files = {
         f'{output_dir}/proxy_ru_verified.txt':  ru,
         f'{output_dir}/proxy_eu_verified.txt':  eu,
-        f'{output_dir}/proxy_all_verified.txt': valid,
+        f'{output_dir}/proxy_all_verified.txt': ordered_valid,
     }
     for filename, proxies_list in region_files.items():
         region_label = 'RU' if 'ru' in filename else 'EU' if 'eu' in filename else 'All'
@@ -485,24 +632,27 @@ async def main_async(args: argparse.Namespace) -> None:
             f.write('\n' + '\n'.join(x['link'] for x in chunk))
 
     with open(f'{output_dir}/proxy_all_tme_verified.txt', 'w', encoding='utf-8') as f:
-        f.write(f'# Verified Proxies t.me format ({len(valid[:top_n])})\n')
+        f.write(f'# Verified Proxies t.me format ({len(ordered_valid[:top_n])})\n')
         f.write(f'# Updated: {utc_now.strftime("%Y-%m-%d %H:%M:%S UTC")}\n\n')
-        for x in valid[:top_n]:
+        for x in ordered_valid[:top_n]:
             f.write(make_tme_link(x['host'], x['port'], x['secret']) + '\n')
 
     with open(f'{output_dir}/proxy_links_clean.txt', 'w', encoding='utf-8') as f:
-        for x in valid[:top_n]:
+        for x in ordered_valid[:top_n]:
             f.write(x['link'] + '\n')
 
     with open(f'{output_dir}/proxy_links_tme_clean.txt', 'w', encoding='utf-8') as f:
-        for x in valid[:top_n]:
+        for x in ordered_valid[:top_n]:
             f.write(make_tme_link(x['host'], x['port'], x['secret']) + '\n')
 
     with open(f'{output_dir}/proxy_all_verified.json', 'w', encoding='utf-8') as f:
-        json.dump(valid[:top_n], f, indent=2, ensure_ascii=False)
+        json.dump(ordered_valid[:top_n], f, indent=2, ensure_ascii=False)
+
+    with open(f'{output_dir}/proxies.json', 'w', encoding='utf-8') as f:
+        json.dump(build_public_payload(ordered_valid[:top_n], utc_now), f, indent=2, ensure_ascii=False)
 
     # Сохраняем подробный лог
-    _write_verification_log(output_dir, start_time, total, valid)
+    _write_verification_log(output_dir, start_time, total, ordered_valid)
 
     elapsed = round(time.time() - start_time, 1)
     stats = {
@@ -561,9 +711,6 @@ def _write_verification_log(output_dir: str, start_time: float, total_checked: i
             for p in top20:
                 f.write(f"  {p['host']}:{p['port']} | ping={p['ping']}s | {p['region']} | {p['domain']}\n")
     print(f"📋 Лог проверки сохранён: {log_path}")
-
-# Заглушка для корректного логирования в Telethon-режиме (полная реализация опущена для краткости)
-# В реальном коде нужно хранить соответствие таск -> прокси.
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='🚀 MTProto Proxy Collector v2.4')

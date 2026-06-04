@@ -35,6 +35,30 @@ GitHub Actions **сохраняет результаты** в папку `verifi
 
 ---
 
+## 🌐 **Страница для GitHub Pages**
+
+В репозитории есть готовая статическая страница со списком рабочих Telegram-прокси:
+
+- `proxies.html` — страница для пользователей с RU- и EU-сегментами, кнопками подключения и копирования.
+- `verified/proxies.json` — JSON для фронтенда. В него попадают только проверенные рабочие прокси.
+
+После включения GitHub Pages страницу можно открыть по адресу:
+
+```text
+https://kort0881.github.io/telegram-proxy-collector/proxies.html
+```
+
+Чтобы включить GitHub Pages:
+
+1. Открой `Settings` → `Pages` в GitHub-репозитории.
+2. В `Build and deployment` выбери `Deploy from a branch`.
+3. Укажи ветку `main` и папку `/ (root)`.
+4. Сохрани настройки и дождись публикации.
+
+Доступность прокси может меняться со временем. Если один сервер не подключается, выбери другой из списка.
+
+---
+
 ## 📱 **Использование с телефона**
 
 Если ты открыл репозиторий **с телефона** и не хочешь копировать прокси вручную:
@@ -47,6 +71,9 @@ GitHub Actions **сохраняет результаты** в папку `verifi
    - Откроется ссылка вида `t.me/proxy?server=...&port=...&secret=...`.  
    - Telegram спросит: **«Подключиться к прокси?»** — просто подтверди, и прокси будет **активирован**.
 4. Страница `mobile.html` **автоматически** считывает файл `verified/proxy_links_tme_clean.txt` из этого репозитория, разбивает его на строки и **превращает каждую** в отдельную кнопку, обеспечивая удобный интерфейс прямо с телефона.
+
+Для более подробного списка с пингом, сегментами RU/EU и копированием ссылок используй:
+[https://kort0881.github.io/telegram-proxy-collector/proxies.html](https://kort0881.github.io/telegram-proxy-collector/proxies.html)
 
 ---
 
@@ -99,6 +126,11 @@ GitHub Actions **сохраняет результаты** в папку `verifi
   - `ping`, `region` (`ru` / `eu`),  
   - `domain` (домен‑маска),  
   - `method` (`TCP_OK` / `Telethon_OK`).
+- `verified/proxies.json` — публичный JSON для `proxies.html`:
+  - `updated_at`,
+  - `segments.ru`, `segments.eu`,
+  - `type`, `country`, `host`, `port`, `status`, `ping_ms`,
+  - `connect_url`, `web_url`.
 - `verified/proxy_stats_verified.json` — **статистика** по запуску:
   - количество «сырых» прокси,  
   - количество верифицированных,  
@@ -137,6 +169,40 @@ python main.py
 
 # или с ограничением по топу и пользовательской папкой вывода:
 python main.py --top 200 --output-dir verified
+```
+
+Или через отдельную точку входа для GitHub Actions:
+
+```bash
+python scripts/generate_proxies.py --top 200 --output-dir verified
+```
+
+Открыть страницу локально можно через простой HTTP-сервер из корня проекта:
+
+```bash
+python -m http.server 8000
+```
+
+Затем открой:
+
+```text
+http://localhost:8000/proxies.html
+```
+
+---
+
+## 🔁 **Ручное обновление через GitHub Actions**
+
+Workflow находится в `.github/workflows/update.yml`.
+
+Чтобы обновить список вручную:
+
+1. Открой вкладку `Actions` в GitHub.
+2. Выбери workflow `Update Verified Proxy Lists`.
+3. Нажми `Run workflow`.
+4. Дождись завершения job `collect`.
+
+Workflow установит Python и зависимости, запустит генератор, проверит наличие итоговых файлов и закоммитит изменения обратно в репозиторий только если файлы реально изменились. Секреты не обязательны: без `MTPROXY_API_ID` и `MTPROXY_API_HASH` используется TCP-проверка доступности порта.
 
 ---
 
