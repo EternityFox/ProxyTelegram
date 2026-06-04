@@ -37,17 +37,14 @@ jobs:
         test -f verified/proxy_eu_verified.txt
         test -f verified/proxy_all_verified.txt
 
-    - name: Copy public lists
-      run: |
-        cp verified/proxy_ru_verified.txt  proxy_ru.txt
-        cp verified/proxy_eu_verified.txt  proxy_eu.txt
-        cp verified/proxy_all_verified.txt proxy_all.txt
-
     - name: Commit changes
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add verified/ proxy_ru.txt proxy_eu.txt proxy_all.txt index.html proxies.html README.md .github/workflows/update.yml scripts/generate_proxies.py main.py
+        git add index.html README.md requirements.txt main.py scripts/generate_proxies.py .github/workflows/update.yml
+        git add verified/proxies.json verified/proxy_all_verified.json verified/proxy_stats_verified.json
+        git add verified/proxy_ru_verified.txt verified/proxy_eu_verified.txt verified/proxy_all_verified.txt
+        git add verified/proxy_all_tme_verified.txt verified/proxy_links_clean.txt verified/proxy_links_tme_clean.txt
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else

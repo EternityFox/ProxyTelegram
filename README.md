@@ -1,212 +1,135 @@
-# 🛡️ Telegram Proxy Collector: Anti‑Censorship Edition
+# Telegram Proxy List
 
-[![oosmetrics — Топ‑5 в категории Crypto](https://api.oosmetrics.com/api/v1/badge/achievement/21322b63-7982-4e81-99f7-ada7354f9c21.svg)](https://oosmetrics.com/repo/kort0881/telegram-proxy-collector)
+Telegram Proxy List — это Python-проект для генерации и публикации списка проверенных рабочих Telegram-прокси. Итоговая статическая страница подходит для GitHub Pages и показывает только прокси, которые прошли проверку во время последнего обновления.
 
-**Умный комбайн** для сбора, анализа и отбора MTProto‑прокси.  
-В отличие от обычных парсеров, этот скрипт **глубоко анализирует** `Secret` каждого прокси, извлекает **домен‑маску** (Yandex, VK, Mail.ru, Gosuslugi, Google, Amazon, Microsoft и др.) и использует эту информацию при фильтрации.  
-Это особенно важно в условиях жёстких DPI‑блокировок, где **маскировка под легитимный HTTPS** может быть разницей между работой и полной недоступностью.
+Прокси разделены на два сегмента:
 
-👉 [GitHub — Telegram Proxy Collector](https://github.com/kort0881/telegram-proxy-collector)
+- `RU` — прокси с признаками RU-сегмента.
+- `EU` — остальные проверенные прокси для EU/Global-сегмента.
 
----
+Публичная страница имеет минималистичный адаптивный интерфейс, кнопки подключения к Telegram, копирование ссылок и переключатель светлой/тёмной темы.
 
-## 🛠️ Community Tools: утилиты от пользователей
+## Возможности
 
-| Инструмент | Описание | Автор |
-| --- | --- | --- |
-| [Parser‑telegram‑proxies](https://github.com/ComradeBingo/Parser-telegram-proxies-list/) | Удобная Windows‑утилита для парсинга и проверки MTProto‑прокси с **отображением пинга в реальном времени**. Обновлённая версия исправляет периодические блокировки запросов к TXT‑файлам на GitHub за счёт использования HTTP‑запросов вместо прямого чтения. | [ComradeBingo](https://github.com/ComradeBingo) |
-| [Proxy‑Telegram‑Android](https://github.com/ComradeBingo/Proxy-Telegram-Android) | Приложение для Android, которое **парсит прокси‑списки**, проверяет их доступность и показывает пинг серверов. | [ComradeBingo](https://github.com/ComradeBingo) |
-| [Proxy‑telegram‑windows](https://github.com/ComradeBingo/Proxy-telegram-windows) | Парсер прокси‑серверов для Telegram на Windows. Обновлён до версии **1.2**: переработан GUI, добавлено меню «Справка», улучшена стабильность и удобство использования. | [ComradeBingo](https://github.com/ComradeBingo) |
+- Генерация списка проверенных Telegram-прокси.
+- Отображение только рабочих прокси.
+- Разделение прокси на RU и EU сегменты.
+- Сортировка прокси внутри сегментов по задержке.
+- Кнопки подключения к Telegram.
+- Копирование ссылок подключения.
+- Светлая и тёмная тема с сохранением выбора в браузере.
+- Ручное и автоматическое обновление через GitHub Actions.
+- Публикация готовой страницы через GitHub Pages.
 
----
+## Структура проекта
 
-## 🔥 **Актуальные списки** (обновляются автоматически)
+- `index.html` — публичная страница со списком проверенных прокси.
+- `main.py` — основной сборщик и проверяющий скрипт.
+- `scripts/generate_proxies.py` — точка входа для локального запуска и GitHub Actions.
+- `requirements.txt` — зависимости Python.
+- `.github/workflows/update.yml` — workflow для обновления proxy-данных.
+- `verified/` — папка с итоговыми сгенерированными файлами.
+- `verified/proxies.json` — основной JSON для публичной страницы.
+- `verified/proxy_all_verified.json` — подробный список проверенных прокси.
+- `verified/proxy_ru_verified.txt` — проверенные прокси RU-сегмента.
+- `verified/proxy_eu_verified.txt` — проверенные прокси EU-сегмента.
+- `verified/proxy_all_verified.txt` — общий список проверенных прокси.
+- `verified/proxy_stats_verified.json` — статистика последнего запуска генератора.
 
-Скрипт **каждый час** запускается через [GitHub Actions](https://github.com/kort0881/telegram-proxy-collector/actions), **собирает** свежие MTProto‑прокси из открытых источников, **фильтрует**, **проверяет** и **обновляет** списки.  
-GitHub Actions **сохраняет результаты** в папку `verified/`, а затем **копирует** их в `proxy_ru.txt`, `proxy_eu.txt` и `proxy_all.txt` в корне репозитория — поэтому **ссылки ниже всегда ведут на свежие списки**.
+## Формат данных
 
-📦 **Прямые ссылки** для вставки в Telegram или свои программы:
+Основная страница читает файл `verified/proxies.json`. Он содержит время обновления и два сегмента:
 
-| Регион | Список | Примечание |
-| --- | --- | --- |
-| 🇷🇺 RU‑сегмент (Top Tier) | [proxy_ru.txt](https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_ru.txt) | Маскировка под **Yandex, VK, Mail.ru, Gosuslugi, Sber, Mos.ru** и др. Нацелен на **лучшую стабильность в РФ и Иране**. |
-| 🇪🇺 EU / Global | [proxy_eu.txt](https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_eu.txt) | Маскировка под **Google, Amazon, Microsoft, Cloudflare** и другие международные сервисы. Высокая скорость и стабильность, особенно вне РФ. |
-| 🌍 Все прокси | [proxy_all.txt](https://raw.githubusercontent.com/kort0881/telegram-proxy-collector/main/proxy_all.txt) | Полный микс всех проверенных серверов (RU + EU). Максимальное количество прокси, но без жёсткого приоритета по региону. |
-
----
-
-## 🌐 **Страница для GitHub Pages**
-
-В репозитории есть готовая статическая страница со списком рабочих Telegram-прокси:
-
-- `proxies.html` — страница для пользователей с RU- и EU-сегментами, кнопками подключения и копирования.
-- `verified/proxies.json` — JSON для фронтенда. В него попадают только проверенные рабочие прокси.
-
-После включения GitHub Pages страницу можно открыть по адресу:
-
-```text
-https://kort0881.github.io/telegram-proxy-collector/proxies.html
+```json
+{
+  "updated_at": "2026-06-04T12:00:00Z",
+  "segments": {
+    "ru": [],
+    "eu": []
+  },
+  "counts": {
+    "ru": 0,
+    "eu": 0,
+    "total": 0
+  }
+}
 ```
 
-Чтобы включить GitHub Pages:
+В публичный JSON попадают только записи со статусом `working`. Если рабочие прокси не найдены, генератор создаёт валидный JSON с пустыми массивами, а страница показывает пустое состояние без ошибки.
 
-1. Открой `Settings` → `Pages` в GitHub-репозитории.
-2. В `Build and deployment` выбери `Deploy from a branch`.
-3. Укажи ветку `main` и папку `/ (root)`.
-4. Сохрани настройки и дождись публикации.
+## Локальный запуск
 
-Доступность прокси может меняться со временем. Если один сервер не подключается, выбери другой из списка.
-
----
-
-## 📱 **Использование с телефона**
-
-Если ты открыл репозиторий **с телефона** и не хочешь копировать прокси вручную:
-
-1. Открой страницу:  
-   [https://kort0881.github.io/telegram-proxy-collector/mobile.html](https://kort0881.github.io/telegram-proxy-collector/mobile.html)
-2. На странице ты увидишь **кнопки**:  
-   «Подключить прокси #1», «Подключить прокси #2», и т.д.
-3. При нажатии:  
-   - Откроется ссылка вида `t.me/proxy?server=...&port=...&secret=...`.  
-   - Telegram спросит: **«Подключиться к прокси?»** — просто подтверди, и прокси будет **активирован**.
-4. Страница `mobile.html` **автоматически** считывает файл `verified/proxy_links_tme_clean.txt` из этого репозитория, разбивает его на строки и **превращает каждую** в отдельную кнопку, обеспечивая удобный интерфейс прямо с телефона.
-
-Для более подробного списка с пингом, сегментами RU/EU и копированием ссылок используй:
-[https://kort0881.github.io/telegram-proxy-collector/proxies.html](https://kort0881.github.io/telegram-proxy-collector/proxies.html)
-
----
-
-## 🚀 **Как это работает?**
-
-Скрипт **запускается каждые 4 часа** через [GitHub Actions](https://github.com/kort0881/telegram-proxy-collector/actions) и последовательно проходит **четыре главных этапа**:
-
-### 1. Сбор (Harvesting)
-
-- Скачивает **«сырые» прокси** из следующих источников:
-  - GitHub‑репозитории с MTProto‑списками,  
-  - TXT‑файлы,  
-  - JSON‑API,  
-  - API‑сервисов, публикующих прокси.
-- Использует **агрессивный Regex‑парсинг** для извлечения ссылок из любого формата:
-  - `tg://proxy?server=...&port=...&secret=...`  
-  - `t.me/proxy?server=...&port=...&secret=...`  
-  - `host:port:secret`  
-  - JSON‑объекты, где прокси заданы через `server` / `host`, `port`, `secret`.
-
-### 2. Декодирование (Deep Analysis)
-
-- Расшифровывает **Fake‑TLS‑секреты** (начинаются на `ee...`).
-- Извлекает **домен**, под который идёт маскировка трафика (например `yandex.ru`, `vk.com`, `google.com`, `amazon.com` и т.д.).
-- На основе домена **помечает** прокси как `ru` или `eu` (по набору ключевых слов в URL).
-
-### 3. Фильтрация (Smart Filter)
-
-- ❌ **Blacklist:** прокси, маскирующиеся под **заведомо заблокированные ресурсы** (Instagram, Facebook, Twitter, BBC, Meduza, LinkedIn, Tor и др.), **отбрасываются**, чтобы не тратить трафик и время на проверку.
-- ✅ **RU‑маркер:** прокси, содержащие в домене `yandex`, `vk.com`, `mail.ru`, `ok.ru`, `sber`, `tinkoff`, `vtb`, `gosuslugi`, `ozon`, `wildberries`, `avito`, `kinopoisk` и др., помечаются как `ru`.  
-- ✅ **EU‑маркер:** остальные прокси, не попавшие в RU‑список, считаются `eu` и группируются отдельно.
-
-### 4. Проверка (Checking)
-
-- Пингует каждый прокси через **TCP‑сокет** (или через **Telethon MTProto**, если переданы `API_ID` и `API_HASH`).
-- Измеряет **реальное время ответа** (ping) и доступность порта (по умолчанию `timeout = 2.0` с).
-- Для каждой пары `host:port` оставляет **только самый быстрый** вариант (минимальный ping).
-
----
-
-## 📁 **Итоговые файлы**
-
-После прохождения всех этапов результат записывается **в несколько форматов**:
-
-- `proxy_ru.txt`, `proxy_eu.txt`, `proxy_all.txt` — **готовые списки** `tg://proxy?...`, удобные для **импорта в Telegram** и других клиентов.
-- `verified/proxy_*_verified.txt` — те же списки, **разложенные по регионам** (RU / EU / All), с дополнительными комментариями (метод проверки, лучший ping).
-- `verified/proxy_all_tme_verified.txt` — удобные ссылки `t.me/proxy?server=...`, подходящие для **быстрого обмена** с пользователями.
-- `verified/proxy_all_verified.json` — подробный JSON с полями:
-  - `host`, `port`, `secret`,  
-  - `ping`, `region` (`ru` / `eu`),  
-  - `domain` (домен‑маска),  
-  - `method` (`TCP_OK` / `Telethon_OK`).
-- `verified/proxies.json` — публичный JSON для `proxies.html`:
-  - `updated_at`,
-  - `segments.ru`, `segments.eu`,
-  - `type`, `country`, `host`, `port`, `status`, `ping_ms`,
-  - `connect_url`, `web_url`.
-- `verified/proxy_stats_verified.json` — **статистика** по запуску:
-  - количество «сырых» прокси,  
-  - количество верифицированных,  
-  - лучший ping,  
-  - время выполнения,  
-  - режим проверки (TCP / Telethon).
-
----
-
-## 🔗 **Мои проекты**
-
-| Проект | Описание | Ссылка |
-| --- | --- | --- |
-| [VPN KEY VLESS](https://t.me/vlesstrojan) | Основной канал с конфигами, инструкциями и новостями по VLESS‑конфигам и прокси‑сети. | [Telegram](https://t.me/vlesstrojan) |
-| [KiberSos New](https://t.me/kibersosnew) | Резервный канал для связи, обновлений и техподдержки. | [Telegram](https://t.me/kibersosnew) |
-| [VlessBots](https://t.me/vlessbots_bot) | Бот для **автоматической выдачи ключей** и прокси‑ссылок по запросу. | [Bot](https://t.me/vlessbots_bot) |
-| [Internet Access](https://kort0881.github.io/internet-access-site/) | Сайт проекта с подробной документацией, FAQ и примерами использования. | [Website](https://kort0881.github.io/internet-access-site/) |
-| [VPN Key Repo](https://github.com/kort0881/vpn-key-vless) | Репозиторий скриптов, конфигураций и утилит для работы с VLESS‑сервисами и прокси‑сетями. | [GitHub](https://github.com/kort0881/vpn-key-vless) |
-
----
-
-## 🛠️ **Локальный запуск (для разработчиков)**
-
-Если хочешь запустить сборщик **на своём ПК**, а не только на GitHub Actions:
+Установите зависимости:
 
 ```bash
-# 1. Клонировать репозиторий
-git clone https://github.com/kort0881/telegram-proxy-collector.git
-cd telegram-proxy-collector
-
-# 2. Установить зависимости
-pip install requests telethon
-
-# 3. Запустить (по умолчанию: TCP‑проверка)
-python main.py
-
-# или с ограничением по топу и пользовательской папкой вывода:
-python main.py --top 200 --output-dir verified
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Или через отдельную точку входа для GitHub Actions:
+Запустите генерацию:
 
 ```bash
 python scripts/generate_proxies.py --top 200 --output-dir verified
 ```
 
-Открыть страницу локально можно через простой HTTP-сервер из корня проекта:
+После завершения генератор обновит файлы в `verified/`.
+
+Для локального просмотра страницы запустите простой HTTP-сервер из корня проекта:
 
 ```bash
 python -m http.server 8000
 ```
 
-Затем открой:
+Затем откройте:
 
 ```text
-http://localhost:8000/proxies.html
+http://localhost:8000/
 ```
 
----
-
-## 🔁 **Ручное обновление через GitHub Actions**
+## Обновление через GitHub Actions
 
 Workflow находится в `.github/workflows/update.yml`.
 
-Чтобы обновить список вручную:
+Ручной запуск:
 
-1. Открой вкладку `Actions` в GitHub.
-2. Выбери workflow `Update Verified Proxy Lists`.
-3. Нажми `Run workflow`.
-4. Дождись завершения job `collect`.
+1. Откройте вкладку `Actions` в GitHub.
+2. Выберите workflow `Update Verified Proxy Lists`.
+3. Нажмите `Run workflow`.
+4. Дождитесь завершения job `collect`.
+5. Если данные изменились, workflow закоммитит обновлённые файлы обратно в репозиторий.
 
-Workflow установит Python и зависимости, запустит генератор, проверит наличие итоговых файлов и закоммитит изменения обратно в репозиторий только если файлы реально изменились. Секреты не обязательны: без `MTPROXY_API_ID` и `MTPROXY_API_HASH` используется TCP-проверка доступности порта.
+Workflow выполняет следующие действия:
 
----
+- устанавливает Python;
+- устанавливает зависимости из `requirements.txt`;
+- запускает `python scripts/generate_proxies.py --top 200 --output-dir verified`;
+- проверяет наличие итоговых файлов;
+- коммитит только актуальные файлы страницы, генератора, workflow и сгенерированные данные из `verified/`.
 
-## ⚠️ **Дисклеймер и безопасность**
+Секреты не обязательны. Без `MTPROXY_API_ID` и `MTPROXY_API_HASH` используется TCP-проверка доступности порта. Если эти переменные заданы, генератор может использовать более глубокую MTProto-проверку через Telethon.
 
-Этот репозиторий не гарантирует анонимность, невозможность слежки или защищённость от компрометации.  
-Все прокси‑серверы предоставляются на условиях «как есть», и их качество зависит от внешних источников.
+## GitHub Pages
+
+Страница находится в корне проекта и называется `index.html`, поэтому GitHub Pages можно публиковать из корня ветки.
+
+Настройка:
+
+1. Откройте `Settings` → `Pages`.
+2. В разделе `Build and deployment` выберите `Deploy from a branch`.
+3. Выберите ветку `main`.
+4. Выберите папку `/ (root)`.
+5. Сохраните настройки.
+
+После публикации страница будет доступна по стандартному адресу GitHub Pages:
+
+```text
+https://<owner>.github.io/<repository>/
+```
+
+Для пользовательского или организационного Pages-репозитория адрес может отличаться. Используйте URL, который GitHub покажет в настройках Pages.
+
+## Предупреждение
+
+Доступность прокси может меняться в любой момент. Проект не гарантирует постоянную работоспособность каждого сервера. Генератор публикует только те прокси, которые прошли проверку на момент последнего обновления.
+
+Используйте прокси на свой риск. Проект не гарантирует анонимность, защиту от слежки или невозможность блокировки соединения.

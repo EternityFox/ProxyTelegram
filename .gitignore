@@ -3,6 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Logs and local runtime files
+*.log
+logs/
+debug.log
 
 # IDE
 .vscode/
@@ -11,6 +20,24 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Old local proxy dumps
+proxy_ru.txt
+proxy_eu.txt
+proxy_all.txt
+proxy.txt
+proxies.txt
+proxy_list.txt
+raw_proxies.txt
+unchecked_proxies.txt
+failed_proxies.txt
+ping_history.json
+
+# Obsolete generated artifacts from older layouts
+verified/proxy_all.txt
+verified/proxy_domain_verified.txt
+verified/proxy_links.txt
+verified/source_stats.json
 
 dpi_detector.spec
 build/
