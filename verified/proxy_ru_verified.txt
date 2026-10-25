@@ -1,7 +1,7 @@
 # Verified RU Proxies (2)
-# Updated: 2026-10-25 09:11:51 UTC
+# Updated: 2026-10-25 19:05:51 UTC
 # Method: TCP_OK
-# Best ping: 0.181s
+# Best ping: 0.182s
 
 tg://proxy?server=cdnpulse.org&port=443&secret=ee14f36dd188bffec614c6c664ac37d71a686f66662e7275
 tg://proxy?server=cdnwake.org&port=443&secret=eecee7b6e27470f95e6aa8c507f66a0c9f686f66662e7275
